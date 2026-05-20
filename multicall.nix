@@ -56,6 +56,14 @@ let
   multicall = pkgs.pkgsStatic.util-linux.overrideAttrs (old: {
     pname = "util-linux-multi";
 
+    # nixpkgs splits util-linux into 9 outputs (bin/dev/out/lib/man/login/
+    # mount/swap/debug); collapse to one. The split-output postInstall
+    # moves files between $bin/$login/$mount/$swap/$man/etc., expecting
+    # all of `make install`'s artefacts. With our X+Z installPhase override
+    # (which skips `make install`) most outputs would be empty and nix
+    # errors on missing outputs.
+    outputs = [ "out" ];
+
     postBuild = (old.postBuild or "") + ''
       set -e
       mkdir -p multicall
@@ -209,40 +217,96 @@ let
         exit 1
       fi
 
-      # 3. Per-tool: ld -r + iterated --redefine-sym to rename
-      #    main → <san>_main and every other defined global → <san>__<sym>.
-      __ul_combine() {
-        local san=$1 objs=$2
-        $LD -r -o multicall/$san.combined.o $objs
-        local -a redefs=()
-        while read -r old new; do
-          [ -n "$old" ] || continue
-          redefs+=(--redefine-sym "$old=$new")
-        done < <(
-          $NM --defined-only -g multicall/$san.combined.o \
-            | awk -v s="$san" \
-                '$2 ~ /^[TBDR]$/ && $3 !~ /^__x86\.get_pc_thunk\./ {
-                    old = $3
-                    if (old == "main") new = s "_main"
-                    else                new = s "__" old
-                    print old, new
-                }'
-        )
-        if [ ''${#redefs[@]} -gt 0 ]; then
-          $OBJCOPY "''${redefs[@]}" multicall/$san.combined.o
-        fi
-      }
+      # 3. X+Z: rebuild every tool with renames at preprocessor time.
+      #    util-linux has the same shared-source clobber risk as procps
+      #    (lib/monotonic.c compiled per-tool as lib/<san>-monotonic.o,
+      #    but some tools share certain helper .o paths). Two-phase
+      #    discovery + per-tool isolated copies keeps each tool's
+      #    renamed bitcode intact across iterations.
+      _orig_NIX_CFLAGS_COMPILE=''${NIX_CFLAGS_COMPILE:-}
 
-      # Drive the per-tool loop. Build two parallel manifests:
-      #   - combined.list: the list of .combined.o paths (final link input)
-      #   - applets.list:  TSV `orig<TAB>san` (for dispatcher.c generation
-      #                    and for the post-install applet symlink set)
-      : > multicall/combined.list
+      # Phase A: discovery (write rename headers from first-pass .o).
+      #
+      # Collision-only renames: a symbol gets a per-tool `#define` ONLY
+      # when it's defined in 2+ tools' .o sets (e.g. `get_boot_time`
+      # appearing in dmesg-monotonic.o + flock-monotonic.o + lscpu-
+      # monotonic.o … from `lib/monotonic.c` compiled per-tool).
+      # Single-tool symbols are left alone — renaming them via cpp would
+      # also mangle struct/enum/union tags with the same identifier
+      # (cpp doesn't know C's namespace rules), e.g. `lsblk` is both
+      # `struct lsblk` AND a global var.
+      #
+      # Filter to valid C identifiers: gcc LTO sometimes emits globals
+      # with dot-disambiguation suffixes that aren't legal cpp macro
+      # names.
       : > multicall/applets.list
+      : > multicall/global_syms.tsv
       while IFS=$'\t' read -r orig san objs; do
-        __ul_combine "$san" "$objs"
-        echo "multicall/$san.combined.o" >> multicall/combined.list
+        $NM --defined-only -g $objs 2>/dev/null \
+          | awk -v s="$san" '
+              $2 ~ /^[TBDRWVC]$/ \
+                && $3 ~ /^[A-Za-z_][A-Za-z0-9_]*$/ \
+                && $3 != "main" {
+                print $3 "\t" s
+              }' >> multicall/global_syms.tsv
+      done < multicall/tools.filtered.tsv
+
+      # Two collision sources:
+      #   (a) symbol defined in 2+ distinct tools (typical kbuild-style
+      #       shared helper compiled per-tool: lib/<san>-monotonic.o);
+      #   (b) symbol defined in 1+ tool AND in one of the library
+      #       archives we link against at the final stage (e.g.
+      #       `yyparse` in hwclock's parse-date.o AND in libsmartcols's
+      #       filter-parser.lo). Need to NM the libraries too.
+      $NM --defined-only -g $(ls .libs/lib*.a 2>/dev/null) 2>/dev/null \
+        | awk '$2 ~ /^[TBDRWVC]$/ && $3 ~ /^[A-Za-z_][A-Za-z0-9_]*$/ { print $3 }' \
+        | sort -u > multicall/lib_syms.list
+
+      awk -F'\t' -v lib_syms=multicall/lib_syms.list '
+        BEGIN {
+          while ((getline ls < lib_syms) > 0) inLib[ls] = 1
+        }
+        !((($1 SUBSEP $2) in seen)) { seen[$1 SUBSEP $2]=1; count[$1]++ }
+        END {
+          for (s in count) {
+            if (count[s] > 1 || (s in inLib)) print s
+          }
+        }
+      ' multicall/global_syms.tsv | sort -u > multicall/colliding_syms.list
+
+      echo "=== util-linux multicall: $(wc -l < multicall/lib_syms.list) lib symbols, $(wc -l < multicall/colliding_syms.list) tool symbols need rename ==="
+
+      while IFS=$'\t' read -r orig san objs; do
+        {
+          echo "/* multicall rename header: $san */"
+          echo "#define main ''${san}_main"
+          $NM --defined-only -g $objs 2>/dev/null \
+            | awk -v s="$san" '
+                NR==FNR { collide[$0]=1; next }
+                $2 ~ /^[TBDRWVC]$/ \
+                  && $3 ~ /^[A-Za-z_][A-Za-z0-9_]*$/ \
+                  && $3 != "main" \
+                  && ($3 in collide) {
+                  if (!seen[$3]++) print "#define " $3 " " s "__" $3
+                }
+              ' multicall/colliding_syms.list -
+        } > multicall/$san.rename.h
         printf '%s\t%s\n' "$orig" "$san" >> multicall/applets.list
+      done < multicall/tools.filtered.tsv
+
+      # Phase B: per-tool rebuild + isolate
+      : > multicall/all_objs.list
+      while IFS=$'\t' read -r orig san objs; do
+        rm -f $objs
+        NIX_CFLAGS_COMPILE="$_orig_NIX_CFLAGS_COMPILE -include $PWD/multicall/$san.rename.h" \
+          make -j''${NIX_BUILD_CORES:-1} $objs
+
+        mkdir -p multicall/$san
+        for obj in $objs; do
+          flat=$(echo "$obj" | tr '/' '_')
+          cp "$obj" "multicall/$san/$flat"
+          echo "multicall/$san/$flat" >> multicall/all_objs.list
+        done
       done < multicall/tools.filtered.tsv
 
       # 4b. Walk upstream's install-exec-hook to discover the extra
@@ -341,25 +405,29 @@ DISPATCHER_TAIL
       install -m644 ${multicallMk} unpin-multicall.mk
 
       make -f Makefile -f unpin-multicall.mk \
-        MULTI_COMBINED_OBJS="$(tr '\n' ' ' < multicall/combined.list)" \
+        MULTI_TOOL_OBJS="$(tr '\n' ' ' < multicall/all_objs.list)" \
         MULTI_GROUP_OPEN="-Wl,--start-group" \
         MULTI_GROUP_CLOSE="-Wl,--end-group" \
         MULTI_LIBGCC="-lgcc" \
         multicall-link
     '';
 
-    # Replace upstream's 123 separate binaries with the single multicall +
-    # applet symlinks. Wipe both `$bin/bin` AND `$bin/sbin` (nixpkgs'
-    # `_moveSbinToBin` fixupPhase otherwise re-merges sbin into bin and
-    # resurrects the originals next to our multicall).
-    postInstall = (old.postInstall or "") + ''
-      rm -rf "$bin/bin" "$bin/sbin"
-      mkdir -p "$bin/bin"
-      install -m755 multicall/util-linux "$bin/bin/util-linux"
+    # Skip upstream's `make install`: after X+Z's per-tool recompile
+    # (which renamed `main` to `<san>_main` in every tool's .o files),
+    # automake's install rule would relink each tool's standalone binary
+    # — those links can't resolve `main` because we renamed it. We only
+    # ship the multicall + applet symlinks; the rest of util-linux's
+    # 123-binary install set isn't needed.
+    installPhase = ''
+      runHook preInstall
+      mkdir -p "$out/bin"
+      install -m755 multicall/util-linux "$out/bin/util-linux"
       while IFS=$'\t' read -r tool san; do
-        ln -s util-linux "$bin/bin/$tool"
+        ln -s util-linux "$out/bin/$tool"
       done < multicall/applets.list
+      runHook postInstall
     '';
+    postInstall = "";
   });
 
   # Custom makefile fragment that links the multicall against upstream's
@@ -394,9 +462,9 @@ DISPATCHER_TAIL
     # them directly avoids having to parse per-tool LDADDs. PAM/selinux/
     # systemd/audit are NOT in the pkgsStatic buildInputs (configure
     # disables their tools), so we don't link them.
-    $(MULTI_OUT): multicall/dispatcher.o $(MULTI_COMBINED_OBJS)
+    $(MULTI_OUT): multicall/dispatcher.o $(MULTI_TOOL_OBJS)
     	$(CC) $(AM_LDFLAGS) $(LDFLAGS) -o $@ \
-    		multicall/dispatcher.o $(MULTI_COMBINED_OBJS) \
+    		multicall/dispatcher.o $(MULTI_TOOL_OBJS) \
     		$(MULTI_GROUP_OPEN) \
     		$(wildcard .libs/lib*.a) \
     		-lcap-ng -lcrypt -lz -lsqlite3 \
