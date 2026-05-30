@@ -56,6 +56,21 @@ let
   multicall = pkgs.pkgsStatic.util-linux.overrideAttrs (old: {
     pname = "util-linux-multi";
 
+    # asciidoctor turns util-linux's `*.adoc` sources into roff man pages
+    # (configure logs "asciidoctor not found; not building man pages" without
+    # it). Build-time only (buildPackages — it runs on the build host), so it
+    # doesn't taint the static closure. The installPhase below runs
+    # `make install-man` to land them in `$out/share/man`, where `withMan`
+    # harvests them into the embedded `unpin/man/*` ZIP for `unpin man util-linux
+    # <applet>`.
+    nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ pkgs.buildPackages.asciidoctor ];
+
+    # With asciidoctor present the `all` target also tries po4a-generated
+    # translated man pages (`po4a-gen.stamp`), which fails in the sandbox
+    # (Error 126). We only embed the English pages, so turn po4a off — the last
+    # --(en|dis)able-poman on the line wins, overriding nixpkgs's --enable-poman.
+    configureFlags = (old.configureFlags or [ ]) ++ [ "--disable-poman" ];
+
     # nixpkgs splits util-linux into 9 outputs (bin/dev/out/lib/man/login/
     # mount/swap/debug); collapse to one. The split-output postInstall
     # moves files between $bin/$login/$mount/$swap/$man/etc., expecting
@@ -425,6 +440,15 @@ DISPATCHER_TAIL
       while IFS=$'\t' read -r tool san; do
         ln -s util-linux "$out/bin/$tool"
       done < multicall/applets.list
+
+      # Install only the man pages (asciidoctor built them from *.adoc).
+      # `install-man` is automake-standard and copies the *.1/*.8 roff into
+      # $mandir (= $out/share/man, configured prefix) WITHOUT relinking any
+      # binary — unlike `install-exec`, which would fail on our renamed
+      # `<san>_main` symbols. `|| true` so a man-less configuration (no
+      # asciidoctor) still installs the binary cleanly.
+      make install-man || echo "util-linux: install-man failed, shipping without man" >&2
+
       runHook postInstall
     '';
     postInstall = "";
