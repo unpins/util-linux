@@ -61,3 +61,7 @@ The first invocation will offer to add the [unpins.cachix.org](https://unpins.ca
 ## Manual download
 
 The [Releases](https://github.com/unpins/util-linux/releases) page has standalone binaries for manual download.
+
+## Man pages
+
+The applet man pages (126 — sections 1, 5, and 8) are embedded in the binary; read one with `unpin man util-linux <applet>`, e.g. `unpin man util-linux mount`. The section-3 libuuid/libblkid C-library API pages are dropped — this package ships the CLI applets, not the dev libraries.

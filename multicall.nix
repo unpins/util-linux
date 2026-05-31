@@ -449,6 +449,13 @@ DISPATCHER_TAIL
       # asciidoctor) still installs the binary cleanly.
       make install-man || echo "util-linux: install-man failed, shipping without man" >&2
 
+      # Drop the section-3 library API pages (libblkid.3 + libuuid uuid*.3).
+      # We ship the CLI applets, not the dev libraries, and none of these 13
+      # pages corresponds to a shipped applet — they'd only bloat the embedded
+      # `unpin/man` ZIP and make `unpin man util-linux uuid_generate` resolve a
+      # library symbol we don't carry. The applet pages live in man1/man5/man8.
+      rm -rf "$out/share/man/man3"
+
       runHook postInstall
     '';
     postInstall = "";
