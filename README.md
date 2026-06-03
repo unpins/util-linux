@@ -1,6 +1,6 @@
 # util-linux
 
-Standalone build of [util-linux](https://github.com/util-linux/util-linux), shipped as a single multicall binary that dispatches to 122 applets via argv[0] — `mount`, `umount`, `blkid`, `findmnt`, `lsblk`, `dmesg`, `fdisk`, `cfdisk`, `cal`, `hexdump`, `flock`, `agetty`, `sulogin`, `nsenter`, `unshare`, `losetup`, `mkswap`, `swapon`, `swapoff`, `switch_root`, …
+Standalone build of [util-linux](https://github.com/util-linux/util-linux), providing 122 programs — `mount`, `umount`, `blkid`, `findmnt`, `lsblk`, `dmesg`, `fdisk`, `cfdisk`, `cal`, `hexdump`, `flock`, `agetty`, `sulogin`, `nsenter`, `unshare`, `losetup`, `mkswap`, `swapon`, `swapoff`, `switch_root`, …
 
 [![CI](https://github.com/unpins/util-linux/actions/workflows/util-linux.yml/badge.svg)](https://github.com/unpins/util-linux/actions)
 ![Linux](https://img.shields.io/badge/Linux-✓-success?logo=linux&logoColor=white)
@@ -11,37 +11,24 @@ Linux-only: util-linux talks to Linux-specific syscalls (mount, namespaces, init
 
 ## Usage
 
-The package ships one executable, `util-linux`. `unpin install` materializes per-applet shims (`mount`, `umount`, `blkid`, …) next to the multicall using argv[0] dispatch. To run a command directly without installing, invoke as `util-linux <applet>`:
+Run a program with [unpin](https://github.com/unpins/unpin):
 
 ```bash
-util-linux mount /dev/sda1 /mnt
-util-linux blkid /dev/sda1
-util-linux fdisk -l
-util-linux dmesg | tail
+unpin util-linux lsblk
+unpin util-linux mount /dev/sda1 /mnt
+unpin util-linux blkid /dev/sda1
+unpin util-linux fdisk -l
 ```
 
-Or create symlinks named after the commands you want to use as bare names:
+To install the programs onto your PATH:
 
 ```bash
-ln -s "$(command -v util-linux)" ~/bin/mount
-mount /dev/sda1 /mnt
+unpin install util-linux
 ```
 
-Built-in applets (122): `addpart`, `agetty`, `bits`, `blkdiscard`, `blkid`, `blkpr`, `blkzone`, `blockdev`, `cal`, `cfdisk`, `chcpu`, `chmem`, `choom`, `chrt`, `colcrt`, `colrm`, `column`, `coresched`, `ctrlaltdel`, `delpart`, `dmesg`, `eject`, `enosys`, `exch`, `fadvise`, `fallocate`, `fdisk`, `fincore`, `findfs`, `findmnt`, `flock`, `fsck`, `fsck.cramfs`, `fsck.minix`, `fsfreeze`, `fstrim`, `getopt`, `hardlink`, `hexdump`, `hwclock`, `i386`, `ionice`, `ipcmk`, `ipcrm`, `ipcs`, `irqtop`, `isosize`, `kill`, `last`, `lastb`, `ldattach`, `linux32`, `linux64`, `logger`, `look`, `losetup`, `lsblk`, `lsclocks`, `lscpu`, `lsfd`, `lsipc`, `lsirq`, `lslocks`, `lslogins`, `lsmem`, `lsns`, `mcookie`, `mesg`, `mkfs`, `mkfs.bfs`, `mkfs.cramfs`, `mkfs.minix`, `mkswap`, `more`, `mount`, `mountpoint`, `namei`, `nologin`, `nsenter`, `partx`, `pipesz`, `pivot_root`, `prlimit`, `readprofile`, `rename`, `renice`, `resizepart`, `rev`, `rfkill`, `rtcwake`, `script`, `scriptlive`, `scriptreplay`, `setarch`, `setpgid`, `setpriv`, `setsid`, `setterm`, `sfdisk`, `sulogin`, `swaplabel`, `swapoff`, `swapon`, `switch_root`, `taskset`, `uclampset`, `ul`, `umount`, `uname26`, `unshare`, `utmpdump`, `uuidd`, `uuidgen`, `uuidparse`, `waitpid`, `wall`, `wdctl`, `whereis`, `wipefs`, `write`, `x86_64`, `zramctl`.
+`unpin install util-linux` also creates the `mount`, `umount`, `blkid`, … commands.
 
-## Installation
-
-Install with [unpin](https://github.com/unpins/unpin):
-
-```bash
-unpin util-linux
-```
-
-Or run without installing:
-
-```bash
-unpin run util-linux
-```
+Built-in programs (122): `addpart`, `agetty`, `bits`, `blkdiscard`, `blkid`, `blkpr`, `blkzone`, `blockdev`, `cal`, `cfdisk`, `chcpu`, `chmem`, `choom`, `chrt`, `colcrt`, `colrm`, `column`, `coresched`, `ctrlaltdel`, `delpart`, `dmesg`, `eject`, `enosys`, `exch`, `fadvise`, `fallocate`, `fdisk`, `fincore`, `findfs`, `findmnt`, `flock`, `fsck`, `fsck.cramfs`, `fsck.minix`, `fsfreeze`, `fstrim`, `getopt`, `hardlink`, `hexdump`, `hwclock`, `i386`, `ionice`, `ipcmk`, `ipcrm`, `ipcs`, `irqtop`, `isosize`, `kill`, `last`, `lastb`, `ldattach`, `linux32`, `linux64`, `logger`, `look`, `losetup`, `lsblk`, `lsclocks`, `lscpu`, `lsfd`, `lsipc`, `lsirq`, `lslocks`, `lslogins`, `lsmem`, `lsns`, `mcookie`, `mesg`, `mkfs`, `mkfs.bfs`, `mkfs.cramfs`, `mkfs.minix`, `mkswap`, `more`, `mount`, `mountpoint`, `namei`, `nologin`, `nsenter`, `partx`, `pipesz`, `pivot_root`, `prlimit`, `readprofile`, `rename`, `renice`, `resizepart`, `rev`, `rfkill`, `rtcwake`, `script`, `scriptlive`, `scriptreplay`, `setarch`, `setpgid`, `setpriv`, `setsid`, `setterm`, `sfdisk`, `sulogin`, `swaplabel`, `swapoff`, `swapon`, `switch_root`, `taskset`, `uclampset`, `ul`, `umount`, `uname26`, `unshare`, `utmpdump`, `uuidd`, `uuidgen`, `uuidparse`, `waitpid`, `wall`, `wdctl`, `whereis`, `wipefs`, `write`, `x86_64`, `zramctl`.
 
 ## Build locally
 
