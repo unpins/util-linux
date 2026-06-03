@@ -51,4 +51,4 @@ The [Releases](https://github.com/unpins/util-linux/releases) page has standalon
 
 ## Man pages
 
-The applet man pages (126 — sections 1, 5, and 8) are embedded in the binary; read one with `unpin man util-linux <applet>`, e.g. `unpin man util-linux mount`. The section-3 libuuid/libblkid C-library API pages are dropped — this package ships the CLI applets, not the dev libraries.
+The program man pages (126 — sections 1, 5, and 8) are embedded in the binary; read one with `unpin man util-linux <program>`, e.g. `unpin man util-linux mount`. The section-3 libuuid/libblkid C-library API pages are dropped — this package ships the programs, not the dev libraries.
