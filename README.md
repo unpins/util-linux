@@ -1,6 +1,6 @@
 # util-linux
 
-Standalone build of [util-linux](https://github.com/util-linux/util-linux), providing 122 programs — `mount`, `umount`, `blkid`, `findmnt`, `lsblk`, `dmesg`, `fdisk`, `cfdisk`, `cal`, `hexdump`, `flock`, `agetty`, `sulogin`, `nsenter`, `unshare`, `losetup`, `mkswap`, `swapon`, `swapoff`, `switch_root`, …
+Standalone build of [util-linux](https://github.com/util-linux/util-linux), providing 122 programs — `mount`, `umount`, `blkid`, `findmnt`, `lsblk`, `dmesg`, `fdisk`, `cfdisk`, …
 
 [![CI](https://github.com/unpins/util-linux/actions/workflows/util-linux.yml/badge.svg)](https://github.com/unpins/util-linux/actions)
 ![Linux](https://img.shields.io/badge/Linux-✓-success?logo=linux&logoColor=white)
@@ -26,9 +26,7 @@ To install the programs onto your PATH:
 unpin install util-linux
 ```
 
-`unpin install util-linux` also creates the `mount`, `umount`, `blkid`, … commands.
-
-Built-in programs (122): `addpart`, `agetty`, `bits`, `blkdiscard`, `blkid`, `blkpr`, `blkzone`, `blockdev`, `cal`, `cfdisk`, `chcpu`, `chmem`, `choom`, `chrt`, `colcrt`, `colrm`, `column`, `coresched`, `ctrlaltdel`, `delpart`, `dmesg`, `eject`, `enosys`, `exch`, `fadvise`, `fallocate`, `fdisk`, `fincore`, `findfs`, `findmnt`, `flock`, `fsck`, `fsck.cramfs`, `fsck.minix`, `fsfreeze`, `fstrim`, `getopt`, `hardlink`, `hexdump`, `hwclock`, `i386`, `ionice`, `ipcmk`, `ipcrm`, `ipcs`, `irqtop`, `isosize`, `kill`, `last`, `lastb`, `ldattach`, `linux32`, `linux64`, `logger`, `look`, `losetup`, `lsblk`, `lsclocks`, `lscpu`, `lsfd`, `lsipc`, `lsirq`, `lslocks`, `lslogins`, `lsmem`, `lsns`, `mcookie`, `mesg`, `mkfs`, `mkfs.bfs`, `mkfs.cramfs`, `mkfs.minix`, `mkswap`, `more`, `mount`, `mountpoint`, `namei`, `nologin`, `nsenter`, `partx`, `pipesz`, `pivot_root`, `prlimit`, `readprofile`, `rename`, `renice`, `resizepart`, `rev`, `rfkill`, `rtcwake`, `script`, `scriptlive`, `scriptreplay`, `setarch`, `setpgid`, `setpriv`, `setsid`, `setterm`, `sfdisk`, `sulogin`, `swaplabel`, `swapoff`, `swapon`, `switch_root`, `taskset`, `uclampset`, `ul`, `umount`, `uname26`, `unshare`, `utmpdump`, `uuidd`, `uuidgen`, `uuidparse`, `waitpid`, `wall`, `wdctl`, `whereis`, `wipefs`, `write`, `x86_64`, `zramctl`.
+`unpin install util-linux` also creates the 122 programs as commands — `mount`, `umount`, `blkid`, `lsblk`, `fdisk`, … (full list: `unpin info util-linux`).
 
 ## Build locally
 
