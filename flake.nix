@@ -19,6 +19,10 @@
     unpins-lib.lib.mkStandaloneFlake {
       inherit self;
       name = "util-linux";
+      # upstream COPYING default is GPL-2.0-or-later for the programs; the LGPL libs
+      # (libmount/libblkid/libuuid) and a few BSD/public-domain files don't govern
+      # the multicall binary.
+      license = "GPL-2.0-or-later";
       linuxOnly = true;
       build = pkgs:
         import ./multicall.nix {
