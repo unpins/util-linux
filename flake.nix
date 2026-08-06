@@ -47,7 +47,6 @@
       # programs.
       engine = "unpin-llvm";
       multicall = {
-        defaultProgram = "dmesg";
         programs = [
           { name = "addpart"; }
           { name = "agetty"; }
