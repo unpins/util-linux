@@ -177,6 +177,31 @@
       # embedded ZIP.
       build = pkgs:
         pkgs.pkgsStatic.util-linux.overrideAttrs (old: {
+          # nixpkgs rewrites two upstream paths to NixOS store locations:
+          #   sys-utils/eject.c    "/bin/umount" -> "$bin/bin/umount"
+          #   include/pathnames.h  "/bin/login"  -> "<shadow>/bin/login"
+          # Both are exec targets, and neither store path exists on a user's
+          # machine -- so `eject -u` and `agetty` (which execs _PATH_LOGIN)
+          # would exec nothing at all. Upstream's own defaults are the
+          # conventional locations every distro ships. The guard is deliberate:
+          # if nixpkgs ever stops rewriting these, the build fails loudly here
+          # instead of silently leaving the patch as a no-op.
+          postPatch = (old.postPatch or "") + ''
+            for f in sys-utils/eject.c include/pathnames.h; do
+              grep -q '/nix/store/.*/bin/\(umount\|login\)' "$f" \
+                || { echo "unpin: nixpkgs no longer rewrites $f -- drop this patch" >&2; exit 1; }
+            done
+            # `g`: eject.c has the path TWICE on the same line
+            # (execl("/bin/umount", "/bin/umount", ...)), and a sed without it
+            # fixes the first and leaves the second -- which looks like success
+            # and is not.
+            sed -i -E 's#"/nix/store/[a-z0-9]{32}-[^"]*/bin/(umount|login)"#"/bin/\1"#g' \
+              sys-utils/eject.c include/pathnames.h
+
+            # E prova: nao pode sobrar caminho de store nesses dois arquivos.
+            ! grep -q '/nix/store/.*/bin/\(umount\|login\)' sys-utils/eject.c include/pathnames.h \
+              || { echo "unpin: sobrou caminho de store apos a substituicao" >&2; exit 1; }
+          '';
           nativeBuildInputs = (old.nativeBuildInputs or [ ])
             ++ [ pkgs.buildPackages.asciidoctor ];
           configureFlags = (old.configureFlags or [ ]) ++ [ "--disable-poman" ];
