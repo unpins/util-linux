@@ -139,7 +139,24 @@
           { name = "script"; }
           { name = "scriptlive"; }
           { name = "scriptreplay"; }
-          { name = "setarch"; aliases = [ "linux32" "linux64" "uname26" "i386" "x86_64" ]; }
+          # setarch resolves an argv[0] against a transitions[] table whose x86
+          # rows sit behind `#if defined(__x86_64__) || defined(__i386__)`, so on
+          # aarch64/armv7l/ppc64le/riscv64 `i386` and `x86_64` reach setarch and
+          # exit 1 with "Unrecognized architecture" — and upstream, for the same
+          # reason, installs i386.8/x86_64.8 only on x86 (ppc64le gets ppc.8/
+          # ppc32.8 instead). Announcing them everywhere shipped four targets a
+          # name `unpin install` links and nothing can run. The three unguarded
+          # rows above them are portable.
+          {
+            name = "setarch";
+            aliases = [
+              "linux32"
+              "linux64"
+              "uname26"
+              { name = "i386"; supportedTarget = p: p.isx86; }
+              { name = "x86_64"; supportedTarget = p: p.isx86_64; }
+            ];
+          }
           { name = "setpgid"; }
           { name = "setpriv"; }
           { name = "setsid"; }
