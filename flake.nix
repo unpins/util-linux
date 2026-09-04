@@ -215,9 +215,16 @@
             sed -i -E 's#"/nix/store/[a-z0-9]{32}-[^"]*/bin/(umount|login)"#"/bin/\1"#g' \
               sys-utils/eject.c include/pathnames.h
 
-            # E prova: nao pode sobrar caminho de store nesses dois arquivos.
+            # And prove it: no store path may survive in either file.
             ! grep -q '/nix/store/.*/bin/\(umount\|login\)' sys-utils/eject.c include/pathnames.h \
-              || { echo "unpin: sobrou caminho de store apos a substituicao" >&2; exit 1; }
+              || { echo "unpin: a store path survived the substitution" >&2; exit 1; }
+          '';
+          # Section 3 is the libuuid/libblkid C API, and this package ships the
+          # programs, not the dev libraries -- 14 pages for something the binary
+          # cannot run. The old fold installed no man3 at all; the engine build
+          # takes the whole `man` output, so they came back.
+          postInstall = (old.postInstall or "") + ''
+            rm -rf "''${man:-$out}/share/man/man3"
           '';
           nativeBuildInputs = (old.nativeBuildInputs or [ ])
             ++ [ pkgs.buildPackages.asciidoctor ];
