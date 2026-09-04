@@ -22,7 +22,7 @@
 
 - The 14 section-3 pages, which document the libuuid and libblkid C libraries
   rather than any program in here, are no longer embedded — as this README had
-  said all along. The 130 that remain are the programs' pages and the
+  said all along. The 129 that remain are the programs' pages and the
   config-file pages (`fstab`, `terminal-colors.d`, …).
 - Built by the same compiler as the rest of the catalog. The binary grew from
   3.57 MB to 9.91 MB, which is code, not embedded data. Checked on Linux

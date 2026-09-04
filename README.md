@@ -30,7 +30,7 @@ unpin install util-linux
 
 ## Man pages
 
-The program man pages (130 on x86_64 — sections 1, 5, and 8) are embedded in the binary; read one with `unpin man util-linux <program>`, e.g. `unpin man util-linux mount`. The section-3 libuuid/libblkid C-library API pages are dropped — this package ships the programs, not the dev libraries.
+The program man pages (129 on x86_64 — sections 1, 5, and 8) are embedded in the binary; read one with `unpin man util-linux <program>`, e.g. `unpin man util-linux mount`. The section-3 libuuid/libblkid C-library API pages are dropped — this package ships the programs, not the dev libraries.
 
 ## Build locally
 
