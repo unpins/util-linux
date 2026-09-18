@@ -20,6 +20,7 @@
 
 ### Changed
 
+- Updated to util-linux 2.42.2.
 - The 14 section-3 pages, which document the libuuid and libblkid C libraries
   rather than any program in here, are no longer embedded — as this README had
   said all along. The 129 that remain are the programs' pages and the
