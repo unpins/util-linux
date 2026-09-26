@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [2.42.3-1] - 2026-09-26
+
 ### Fixed
 
 - `unpin install util-linux` now creates the commands. In the v2.42-1 release
