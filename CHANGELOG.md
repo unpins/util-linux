@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- `mount` looks for the helpers other packages install (`mount.nfs`,
+  `mount.cifs`, …) in `/sbin`, `/sbin/fs.d` and `/sbin/fs`, the upstream
+  default. It searched two NixOS-only directories and then `/sbin` alone, so a
+  helper in `/sbin/fs.d` or `/sbin/fs` was not found.
+
 ## [2.42.3-1] - 2026-09-26
 
 ### Fixed

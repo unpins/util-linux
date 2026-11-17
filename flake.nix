@@ -234,7 +234,13 @@
           '';
           nativeBuildInputs = (old.nativeBuildInputs or [ ])
             ++ [ pkgs.buildPackages.asciidoctor ];
-          configureFlags = (old.configureFlags or [ ]) ++ [ "--disable-poman" ];
+          # nixpkgs points mount's helper search (mount.nfs, mount.cifs, …) at
+          # NixOS's /run/wrappers/bin and /run/current-system/sw/bin; restore
+          # upstream's default. The last flag wins.
+          configureFlags = (old.configureFlags or [ ]) ++ [
+            "--disable-poman"
+            "--enable-fs-paths-default=/sbin:/sbin/fs.d:/sbin/fs"
+          ];
           # The bitcode multicall hook appends a per-program postBuild block; at
           # 118 programs the generated postBuild (~180KB) exceeds the kernel's
           # MAX_ARG_STRLEN (128KB per env string) and the build dies with
