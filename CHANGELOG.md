@@ -8,6 +8,12 @@
   `mount.cifs`, …) in `/sbin`, `/sbin/fs.d` and `/sbin/fs`, the upstream
   default. It searched two NixOS-only directories and then `/sbin` alone, so a
   helper in `/sbin/fs.d` or `/sbin/fs` was not found.
+- The binary no longer mixes GPL-2.0-only and GPL-3.0-or-later code, whose
+  licenses don't allow it. `hwclock --date` now uses util-linux's own date
+  parser instead of the GPLv3 one shared with `date -d`: it accepts
+  `YYYY-MM-DD [HH:MM[:SS]]`, `now`, `today`, `yesterday`, `tomorrow`, relative
+  offsets like `+5min` and `@<epoch>`, but no longer phrases like
+  `"next friday"`.
 - The 2.42.3-1 entry below says "Updated to util-linux 2.42.2"; that release
   shipped util-linux 2.42.3.
 

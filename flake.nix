@@ -19,12 +19,11 @@
       name = "util-linux";
       # Every license of the code linked into the one binary (README.licensing,
       # each file's SPDX tag): GPL-2.0-or-later by default; GPL-2.0-only in
-      # nsenter and lscpu-dmi; GPL-3.0-or-later in hwclock's date parser;
-      # GPL-1.0-or-later in fdisk; LGPL-2.1-or-later in libmount/libblkid/
+      # nsenter and lscpu-dmi; GPL-1.0-or-later in fdisk; LGPL-2.1-or-later in libmount/libblkid/
       # libuuid/libfdisk/libsmartcols; EUPL-1.2 in coresched; MIT in flock,
       # hardlink and crc64; BSD-2-Clause in xxhash; BSD-3-Clause in randutils;
       # BSD-4-Clause-UC in renice; ISC in rfkill; plus a few public-domain files.
-      license = "GPL-2.0-or-later AND GPL-2.0-only AND GPL-3.0-or-later AND GPL-1.0-or-later AND LGPL-2.1-or-later AND EUPL-1.2 AND MIT AND BSD-2-Clause AND BSD-3-Clause AND BSD-4-Clause-UC AND ISC";
+      license = "GPL-2.0-or-later AND GPL-2.0-only AND GPL-1.0-or-later AND LGPL-2.1-or-later AND EUPL-1.2 AND MIT AND BSD-2-Clause AND BSD-3-Clause AND BSD-4-Clause-UC AND ISC";
       linuxOnly = true;
 
       # Smoke floor: bare `util-linux` (no applet) prints usage, so probe a
@@ -240,6 +239,11 @@
           configureFlags = (old.configureFlags or [ ]) ++ [
             "--disable-poman"
             "--enable-fs-paths-default=/sbin:/sbin/fs.d:/sbin/fs"
+            # hwclock's date(1)-style parser is GPL-3.0-or-later, which can't
+            # share one binary with nsenter's and lscpu-dmi's GPL-2.0-only code.
+            # `hwclock --date` falls back to util-linux's own parser
+            # (YYYY-MM-DD [HH:MM[:SS]], now/today, +5min, @epoch).
+            "--disable-hwclock-gplv3"
           ];
           # The bitcode multicall hook appends a per-program postBuild block; at
           # 118 programs the generated postBuild (~180KB) exceeds the kernel's
