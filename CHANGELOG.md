@@ -8,6 +8,8 @@
   `mount.cifs`, …) in `/sbin`, `/sbin/fs.d` and `/sbin/fs`, the upstream
   default. It searched two NixOS-only directories and then `/sbin` alone, so a
   helper in `/sbin/fs.d` or `/sbin/fs` was not found.
+- The 2.42.3-1 entry below says "Updated to util-linux 2.42.2"; that release
+  shipped util-linux 2.42.3.
 
 ## [2.42.3-1] - 2026-09-26
 

@@ -1,6 +1,6 @@
 # util-linux
 
-[util-linux](https://github.com/util-linux/util-linux) — a single self-contained binary providing 119 programs (`mount`, `umount`, `blkid`, `findmnt`, `lsblk`, `dmesg`, `fdisk`, `cfdisk`, …), built natively for Linux.
+[util-linux](https://github.com/util-linux/util-linux) — a single self-contained binary providing 118 programs (`mount`, `umount`, `blkid`, `findmnt`, `lsblk`, `dmesg`, `fdisk`, `cfdisk`, …), built natively for Linux.
 
 [![CI](https://github.com/unpins/util-linux/actions/workflows/util-linux.yml/badge.svg)](https://github.com/unpins/util-linux/actions)
 ![Linux](https://img.shields.io/badge/Linux-✓-success?logo=linux&logoColor=white)
@@ -51,3 +51,9 @@ The first invocation will offer to add the [unpins.cachix.org](https://unpins.ca
 
 The [Releases](https://github.com/unpins/util-linux/releases) page has standalone binaries for manual download.
 
+## Build notes
+
+- `login`, `chfn`, `chsh`, `runuser` and `lastlog2` are not included: they need PAM, which a single self-contained binary can't link.
+- `col` is not included: upstream builds it only against glibc.
+- `su` is not included here; the catalog ships it in [shadow](https://github.com/unpins/shadow).
+- No systemd or journald integration.
