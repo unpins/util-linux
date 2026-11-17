@@ -10,16 +10,21 @@
 
   # Linux-only multicall: util-linux ships ~118 separate static binaries
   # (mount/umount/blkid/fdisk/cfdisk/agetty/setarch/dmesg/lsblk/…), none
-  # sharing a multicall entry point. Talks to Linux-specific syscalls and
-  # parses /proc, /sys extensively; nixpkgs `meta.platforms` is *-linux only.
+  # sharing a multicall entry point. Most of them are Linux-kernel specific
+  # (Linux syscalls, block-device ioctls, /proc and /sys); nixpkgs builds only
+  # a subset on darwin.
   outputs = { self, unpins-lib }:
     unpins-lib.lib.mkStandaloneFlake {
       inherit self;
       name = "util-linux";
-      # upstream COPYING default is GPL-2.0-or-later for the programs; the LGPL libs
-      # (libmount/libblkid/libuuid) and a few BSD/public-domain files don't govern
-      # the multicall binary.
-      license = "GPL-2.0-or-later";
+      # Every license of the code linked into the one binary (README.licensing,
+      # each file's SPDX tag): GPL-2.0-or-later by default; GPL-2.0-only in
+      # nsenter and lscpu-dmi; GPL-3.0-or-later in hwclock's date parser;
+      # GPL-1.0-or-later in fdisk; LGPL-2.1-or-later in libmount/libblkid/
+      # libuuid/libfdisk/libsmartcols; EUPL-1.2 in coresched; MIT in flock,
+      # hardlink and crc64; BSD-2-Clause in xxhash; BSD-3-Clause in randutils;
+      # BSD-4-Clause-UC in renice; ISC in rfkill; plus a few public-domain files.
+      license = "GPL-2.0-or-later AND GPL-2.0-only AND GPL-3.0-or-later AND GPL-1.0-or-later AND LGPL-2.1-or-later AND EUPL-1.2 AND MIT AND BSD-2-Clause AND BSD-3-Clause AND BSD-4-Clause-UC AND ISC";
       linuxOnly = true;
 
       # Smoke floor: bare `util-linux` (no applet) prints usage, so probe a
@@ -188,10 +193,11 @@
 
       # linuxOnly + no windowsBuild → the engine path is the only build reached.
       # Engine: plain pkgsStatic.util-linux compiled to bitcode and self-folded
-      # into one binary by the standalone. asciidoctor builds the *.adoc man
-      # pages (build-host only); --disable-poman drops the po4a-translated pages
-      # (which fail in the sandbox). withMan harvests $out/share/man into the
-      # embedded ZIP.
+      # into one binary by the standalone. The tarball already ships the
+      # generated man pages; asciidoctor (build-host only) adds setarch's link
+      # pages (linux32/linux64/uname26/i386/x86_64) and is also what turns on
+      # the po4a-translated pages, which fail in the sandbox — hence
+      # --disable-poman. withMan harvests $out/share/man into the embedded ZIP.
       build = pkgs:
         pkgs.pkgsStatic.util-linux.overrideAttrs (old: {
           # nixpkgs rewrites two upstream paths to NixOS store locations:
