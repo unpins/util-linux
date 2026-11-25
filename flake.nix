@@ -147,8 +147,8 @@
           # rows sit behind `#if defined(__x86_64__) || defined(__i386__)`, so on
           # aarch64/armv7l/ppc64le/riscv64 `i386` and `x86_64` reach setarch and
           # exit 1 with "Unrecognized architecture" — and upstream, for the same
-          # reason, installs i386.8/x86_64.8 only on x86 (ppc64le gets ppc.8/
-          # ppc32.8 instead). Announcing them everywhere shipped four targets a
+          # reason, installs i386.8/x86_64.8 only on x86 (ppc64le gets ppc*.8,
+          # dropped below). Announcing them everywhere shipped four targets a
           # name `unpin install` links and nothing can run. The three unguarded
           # rows above them are portable.
           {
@@ -228,8 +228,11 @@
           # programs, not the dev libraries -- 14 pages for something the binary
           # cannot run. The old fold installed no man3 at all; the engine build
           # takes the whole `man` output, so they came back.
+          # ppc{,32,64}.8 are setarch link pages upstream installs on ppc; the
+          # names aren't announced (no real ppc kernel to test), so drop them.
           postInstall = (old.postInstall or "") + ''
             rm -rf "''${man:-$out}/share/man/man3"
+            rm -f "''${man:-$out}"/share/man/man8/ppc{,32,64}.8
           '';
           nativeBuildInputs = (old.nativeBuildInputs or [ ])
             ++ [ pkgs.buildPackages.asciidoctor ];
